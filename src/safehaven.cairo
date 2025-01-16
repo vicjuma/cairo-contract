@@ -1,13 +1,12 @@
 #[starknet::contract]
 mod SafeHaven {
-    use starknet::ContractAddress;
     use PolicyNFTComponent::INFTInternal;
-    use starknet::get_caller_address;
+    use starknet::{get_caller_address, ClassHash};
     use safe_haven::price_converter_component::PriceConverterComponent;
     use safe_haven::policy_NFT_component::PolicyNFTComponent;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::security::pausable::PausableComponent;
-    use openzeppelin::upgrades::UpgradeableComponent;
+    use openzeppelin::upgrades::{UpgradeableComponent, interface::IUpgradeable};
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
     use openzeppelin::security::ReentrancyGuardComponent;
@@ -96,8 +95,15 @@ mod SafeHaven {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress) {
+    fn constructor(ref self: ContractState) {
         self.converter.initializer(ASSET_ID_ETH, ASSET_ID_STRK, PRAGMA_CONTRACT_ADDRESS);
         self.policyNFT.initializer(get_caller_address());
+    }
+
+    #[abi(embed_v0)]
+    impl UpgradeableImpl of IUpgradeable<ContractState> {
+        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            self.upgradeable.upgrade(new_class_hash);
+        }
     }
 }

@@ -1,21 +1,14 @@
 {
   "version": 1,
   "variant": {
-    "type": "braavos",
+    "type": "argent",
     "version": 1,
-    "multisig": {
-      "status": "off"
-    },
-    "signers": [
-      {
-        "type": "stark",
-        "public_key": "0x5d825182c904b47293051e8251ca818873e58120e033ac6fbbbef32eca0838d"
-      }
-    ]
+    "owner": "0x60c38f8f5c3bc1181565d3b8eebd41c86ed08fd7b702f8ae451e45ef49ee7e8",
+    "guardian": "0x0"
   },
   "deployment": {
     "status": "deployed",
-    "class_hash": "0x2c8c7e6fbcfb3e8e15a46648e8914c6aa1fc506fc1e7fb3d1e19630716174bc",
-    "address": "0x2f0f1c15bc9a31a34b0bb4e6f9baed350593e447ef5877c43875b9b2a9bd72"
+    "class_hash": "0x36078334509b514626504edc9fb252328d1a240e4e948bef8d0c08dff45927f",
+    "address": "0x2f02356893365d8fc0f91663a0dae38a3f2690b616026bc52d1d4c126e008e7"
   }
 }
