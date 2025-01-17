@@ -5,7 +5,7 @@ trait INFT<TContractState> {
     fn burn(ref self: TContractState, token_id: felt252);
     fn safe_mint(ref self: TContractState, recipient: ContractAddress, token_id: felt252, data: Span<felt252>);
     fn safeMint(ref self: TContractState, recipient: ContractAddress, tokenId: felt252, data: Span<felt252>);
-    fn purchase_policy(ref self: TContractState, coverage_type: CoverageType, data: Span<felt252>, descrption: ByteArray) -> felt252;
+    fn purchase_policy(ref self: TContractState, coverage_type: CoverageType, amount: u256, data: Span<felt252>, descrption: ByteArray) -> felt252;
     fn get_policy(self: @TContractState, policy_id: felt252) -> Policy;
     fn calculate_premium(ref self: TContractState, coverage: CoverageType) -> u256;
     fn file_claim(ref self: TContractState, policy_id: felt252, claim_description: ByteArray) -> felt252;
@@ -23,10 +23,10 @@ struct Policy {
     potential_outcome: ByteArray,
     assertedClaimId: felt252,
     policyHolder: ContractAddress,
-    coverageAmount: u128,
+    coverageAmount: u32,
     coverageType: CoverageType,
-    startDate: u64,
-    endDate: u64,
+    startDate: felt252,
+    endDate: felt252,
     isClaimed: bool,
     description: ByteArray,
 }
@@ -167,13 +167,12 @@ pub mod PolicyNFTComponent {
             self.safe_mint(recipient, tokenId, data);
         }
 
-        fn purchase_policy(ref self: ComponentState<TContractState>, coverage_type: CoverageType, data: Span<felt252>, descrption: ByteArray) -> felt252 {
+        fn purchase_policy(ref self: ComponentState<TContractState>, coverage_type: CoverageType, amount: u256, data: Span<felt252>, descrption: ByteArray) -> felt252 {
             let mut reentracy = get_dep_component_mut!(ref self, Reentrancy);
             reentracy.start();
             let erc20 = ERC20ABIDispatcher {contract_address: 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7.try_into().unwrap()};
             let policyholder = get_caller_address();
             let policy_id = self.generate_unique_id(policyholder.try_into().unwrap(), get_block_timestamp().try_into().unwrap());
-            let amount = 100000000;
             
             let policy : Policy = match coverage_type {
                 CoverageType::BusinessInterruptions => Policy {
@@ -182,10 +181,10 @@ pub mod PolicyNFTComponent {
                     assertedClaimId: 0,
                     description: descrption,
                     policyHolder: policyholder,
-                    coverageAmount: amount,
+                    coverageAmount: 1000000, // Higher coverage for business
                     coverageType: CoverageType::BusinessInterruptions,
-                    startDate: get_block_timestamp(), 
-                    endDate: get_block_timestamp() + 31536000,
+                    startDate: 1633046400, // Example: Oct 1, 2021
+                    endDate: 1664582400, // Example: Oct 1, 2022
                     isClaimed: false,
                 },
                 CoverageType::IndividualCoverage => Policy {
@@ -194,10 +193,10 @@ pub mod PolicyNFTComponent {
                     assertedClaimId: 0,
                     description: descrption,
                     policyHolder: policyholder,
-                    coverageAmount: amount,
+                    coverageAmount: 500000, // Medium coverage for personal
                     coverageType: CoverageType::IndividualCoverage,
-                    startDate: get_block_timestamp(), 
-                    endDate: get_block_timestamp() + 31536000,
+                    startDate: 1633046400, // Example: Oct 1, 2021
+                    endDate: 1664582400, // Example: Oct 1, 2022
                     isClaimed: false,
                 },
                 CoverageType::EventCancellations => Policy {
@@ -206,10 +205,10 @@ pub mod PolicyNFTComponent {
                     assertedClaimId: 0,
                     description: descrption,
                     policyHolder: policyholder,
-                    coverageAmount: amount,
+                    coverageAmount: 250000, // Lower coverage for event
                     coverageType: CoverageType::EventCancellations,
-                    startDate: get_block_timestamp(), 
-                    endDate: get_block_timestamp() + 31536000,
+                    startDate: 1633046400, // Example: Oct 1, 2021
+                    endDate: 1635724800, // Example: Nov 1, 2021 (shorter duration for event)
                     isClaimed: false,
                 },
             };
@@ -219,10 +218,8 @@ pub mod PolicyNFTComponent {
             self.policies.entry(policy_id).write(policy);
             let mut policyholder_policies = self.policyholder_policies.entry(policyholder); // returns a pointer thus no need to read()
             policyholder_policies.append().write(policy_id);
-            let _premium = self.dollar_to_wei(amount);
-            let approval_success = erc20.approve(get_contract_address(), 3000000000000000);
-            assert(approval_success, 'Could not approve');
-            let isSuccess = erc20.transfer(get_contract_address(), 300000000000);
+            let _premium = self.dollar_to_wei(100000000);
+            let isSuccess = erc20.transfer_from(get_caller_address(), get_contract_address(), 0);
             assert(isSuccess, Errors::UNSUCCESSFUL_PAYMENT);
             self.safeMint(get_caller_address(), policy_id, data);
             self.emit(PolicyCreated {policy_id, policyholder, coverage_type});
@@ -427,8 +424,8 @@ pub mod PolicyNFTComponent {
             .update(*policy.policy_id)
             .update((*policy.policyHolder).into())
             .update((*policy.coverageAmount).into())
-            .update((*policy.startDate).into())
-            .update((*policy.endDate).into())
+            .update(*policy.startDate)
+            .update(*policy.endDate)
             .update(get_block_timestamp().into())
             .finalize()
         }
@@ -480,6 +477,12 @@ pub mod PolicyNFTComponent {
             // Return the composed claim
             claim
         }
+
+        // fn dollar_to_wei(ref self: ComponentState<TContractState>, assertion_fee: u128) -> u128 {
+        //     let mut conv = get_dep_component_mut!(ref self, converter);
+        //     let price_in_usd = conv.get_eth_to_usd();
+        //     (assertion_fee * self.calculate_amount(10, conv.get_decimals_eth()).try_into().unwrap() * 1000000000000000000) / (price_in_usd * self.calculate_amount(10, conv.get_decimals_eth()).try_into().unwrap())
+        // }
         
     }
 }
