@@ -1,47 +1,39 @@
-// use starknet::ContractAddress;
+use safe_haven::mocks::policy_NFT_component::MockSafehaven;
+use safe_haven::{
+    policy_NFT_component::{
+        INFT,
+        PolicyNFTComponent,
+        PolicyNFTComponent::{DisputeResolved, INFTInternal, NFTImpl, PolicyAsserted, PolicyCreated, PolicyDisputed},
+    },
+    constants::constants::OWNER,
+};
+use snforge_std::{
+    ContractClassTrait, DeclareResultTrait, EventSpy, declare, spy_events, start_cheat_caller_address, test_address,
+};
+use starknet::ContractAddress;
+use openzeppelin_testing::events::EventSpyExt;
 
-// use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
+// setup
 
-// use farmers_haven::IHelloStarknetSafeDispatcher;
-// use farmers_haven::IHelloStarknetSafeDispatcherTrait;
-// use farmers_haven::IHelloStarknetDispatcher;
-// use farmers_haven::IHelloStarknetDispatcherTrait;
+type ComponentState = PolicyNFTComponent::ComponentState<MockSafehaven::ContractState>;
 
-// fn deploy_contract(name: ByteArray) -> ContractAddress {
-//     let contract = declare(name).unwrap().contract_class();
-//     let (contract_address, _) = contract.deploy(@ArrayTrait::new()).unwrap();
-//     contract_address
-// }
+fn CONTRACT_STATE() -> MockSafehaven::ContractState {
+    MockSafehaven::contract_state_for_testing()
+}
 
-// #[test]
-// fn test_increase_balance() {
-//     let contract_address = deploy_contract("HelloStarknet");
+fn COMPONENT_STATE() -> ComponentState {
+    PolicyNFTComponent::component_state_for_testing()
+}
 
-//     let dispatcher = IHelloStarknetDispatcher { contract_address };
+fn setup() -> ComponentState {
+    let mut state = COMPONENT_STATE();
+    state
+}
 
-//     let balance_before = dispatcher.get_balance();
-//     assert(balance_before == 0, 'Invalid balance');
+// initializer
 
-//     dispatcher.increase_balance(42);
-
-//     let balance_after = dispatcher.get_balance();
-//     assert(balance_after == 42, 'Invalid balance');
-// }
-
-// #[test]
-// #[feature("safe_dispatcher")]
-// fn test_cannot_increase_balance_with_zero_value() {
-//     let contract_address = deploy_contract("HelloStarknet");
-
-//     let safe_dispatcher = IHelloStarknetSafeDispatcher { contract_address };
-
-//     let balance_before = safe_dispatcher.get_balance().unwrap();
-//     assert(balance_before == 0, 'Invalid balance');
-
-//     match safe_dispatcher.increase_balance(0) {
-//         Result::Ok(_) => core::panic_with_felt252('Should have panicked'),
-//         Result::Err(panic_data) => {
-//             assert(*panic_data.at(0) == 'Amount cannot be 0', *panic_data.at(0));
-//         }
-//     };
-// }
+#[test]
+fn test_initializer() {
+    let mut state = COMPONENT_STATE();
+    state.initializer(OWNER.try_into().unwrap());
+}

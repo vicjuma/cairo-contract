@@ -1,5 +1,5 @@
 #[starknet::contract]
-mod SafeHaven {
+pub mod MockSafehaven {
     use PolicyNFTComponent::INFTInternal;
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
@@ -7,14 +7,10 @@ mod SafeHaven {
     use openzeppelin::security::pausable::PausableComponent;
     use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
     use openzeppelin::upgrades::{UpgradeableComponent, interface::IUpgradeable};
+    use safe_haven::policy_NFT_component;
     use safe_haven::policy_NFT_component::PolicyNFTComponent;
     use safe_haven::price_converter_component::PriceConverterComponent;
     use starknet::{ClassHash, get_caller_address};
-    use safe_haven::constants::constants::OWNER;
-
-    const ASSET_ID_ETH: felt252 = 19514442401534788;
-    const ASSET_ID_STRK: felt252 = 6004514686061859652;
-    const PRAGMA_CONTRACT_ADDRESS: felt252 = 0x36031daa264c24520b11d93af622c848b2499b66b41d611bac95e13cfca131a;
 
     component!(path: PriceConverterComponent, storage: converter, event: converterEvent);
     component!(path: PolicyNFTComponent, storage: policyNFT, event: policyNFTEvent);
@@ -92,18 +88,5 @@ mod SafeHaven {
         SRC5Event: SRC5Component::Event,
         #[flat]
         ReentrancyGuardEvent: ReentrancyGuardComponent::Event,
-    }
-
-    #[constructor]
-    fn constructor(ref self: ContractState) {
-        self.converter.initializer(ASSET_ID_ETH, ASSET_ID_STRK, PRAGMA_CONTRACT_ADDRESS);
-        self.policyNFT.initializer(OWNER.try_into().unwrap());
-    }
-
-    #[abi(embed_v0)]
-    impl UpgradeableImpl of IUpgradeable<ContractState> {
-        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
-            self.upgradeable.upgrade(new_class_hash);
-        }
     }
 }

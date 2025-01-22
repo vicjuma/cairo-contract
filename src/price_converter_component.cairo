@@ -1,8 +1,9 @@
 #[starknet::component]
 pub mod PriceConverterComponent {
-    // use starknet::{ContractAddress, contract_address_const};
-    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
+    // use starknet::{ContractAddress,
+    // contract_address_const};
     use pragma_lib::{abi::{IPragmaABIDispatcher, IPragmaABIDispatcherTrait}, types::{DataType, PragmaPricesResponse}};
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 
     #[storage]
     pub struct Storage {
@@ -14,12 +15,12 @@ pub mod PriceConverterComponent {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        TokenConverted: TokenConverted
+        TokenConverted: TokenConverted,
     }
 
     #[derive(Drop, starknet::Event)]
     struct TokenConverted {
-        token_type: felt252
+        token_type: felt252,
     }
 
     #[starknet::interface]
@@ -32,7 +33,6 @@ pub mod PriceConverterComponent {
 
     #[embeddable_as(ConverterImpl)]
     impl Converter<TContractState, +HasComponent<TContractState>> of IPriceConverter<ComponentState<TContractState>> {
-
         fn get_decimals_eth(self: @ComponentState<TContractState>) -> u32 {
             let (_, decimals) = self.convertion_util('ETH');
             decimals
@@ -45,31 +45,35 @@ pub mod PriceConverterComponent {
 
         fn get_eth_to_usd(ref self: ComponentState<TContractState>) -> u128 {
             let (price_in_usd, _) = self.convertion_util('ETH');
-            self.emit(TokenConverted {token_type: 'ETH'});
+            self.emit(TokenConverted { token_type: 'ETH' });
             price_in_usd
         }
 
         fn get_strk_to_usd(ref self: ComponentState<TContractState>) -> u128 {
             let (price_in_usd, _) = self.convertion_util('STRK');
-            self.emit(TokenConverted {token_type: 'STRK'});
+            self.emit(TokenConverted { token_type: 'STRK' });
             price_in_usd
         }
-        
     }
 
     #[generate_trait]
-    pub impl InternalPriceConverterImpl<TContractState, +HasComponent<TContractState>> of IInternalPriceConverterFunctions<TContractState> {
-
-        fn initializer(ref self: ComponentState<TContractState>, asset_id_eth: felt252, asset_id_strk: felt252, address: felt252) {
+    pub impl InternalPriceConverterImpl<
+        TContractState, +HasComponent<TContractState>,
+    > of IInternalPriceConverterFunctions<TContractState> {
+        fn initializer(
+            ref self: ComponentState<TContractState>, asset_id_eth: felt252, asset_id_strk: felt252, address: felt252,
+        ) {
             self.asset_id_eth.write(asset_id_eth);
             self.asset_id_strk.write(asset_id_strk);
             self.pragma_contract_address.write(address);
         }
 
-        // gets the prices based on the asset ID passed, between STRK and ETH and returns a tuple
+        // gets the prices based on the asset ID
+        // passed, between STRK and ETH and
+        // returns a tuple
         fn convertion_util(self: @ComponentState<TContractState>, asset_id: felt252) -> (u128, u32) {
             let pragma_dispatcher = IPragmaABIDispatcher {
-                contract_address: self.pragma_contract_address.read().try_into().unwrap()
+                contract_address: self.pragma_contract_address.read().try_into().unwrap(),
             };
 
             let id = if asset_id == 'ETH' {
